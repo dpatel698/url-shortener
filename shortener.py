@@ -32,18 +32,10 @@ except Exception as e:
 def get_url(shorturl_key):
     """
     Handles GET requests to /shorturl/<item_id>.
-    Returns a single item by its MongoDB key.
-    Returns 404 if the item is not found.
+    Returns an original url location found by its MongoDB key.
+    Returns 404 if the key is not found.
     """
-    try:
-        # Convert the string ID from the URL to a MongoDB ObjectId
-        key = shorturl_key
-    except Exception:
-        # If the ID is not a valid ObjectId format, return a bad request error
-        return jsonify({"message": "Invalid url format"}), 400
-
-    # Find a single document by its _id
-    item = shortener_collection.find_one({"key": key})
+    item = shortener_collection.find_one({"key": shorturl_key})
 
     if item:
         return jsonify({"location": item['url']}), 302
@@ -139,64 +131,20 @@ def add_item():
     else:
         return jsonify({"wrong_key": new_data['url']}), 500
 
-
-@app.route('/shorturl/<string:item_id>', methods=['PUT'])
-def update_item(item_id):
+@app.route('/shorturl/<string:shorturl_key>', methods=['DELETE'])
+def delete_item(shorturl_key):
     """
-    Handles PUT requests to /items/<item_id>.
-    Updates an existing item by its MongoDB _id.
-    Expects JSON data in the request body with updated 'name' or 'description'.
-    Returns the updated item.
-    Returns 404 if the item is not found.
-    """
-    try:
-        obj_id = ObjectId(item_id)
-    except Exception:
-        return jsonify({"message": "Invalid item ID format"}), 400
-
-    updated_data = request.get_json()
-
-    # Define the update operation. $set updates specific fields.
-    update_result = shortener_collection.update_one(
-        {"_id": obj_id},
-        {"$set": updated_data}
-    )
-
-    if update_result.matched_count == 0:
-        return jsonify({"message": "Item not found"}), 404
-    elif update_result.modified_count == 0:
-        # Item found but no changes were made (e.g., update data was identical)
-        return jsonify({"message": "Item found but no changes applied"}), 200 # Or 204 No Content
-    else:
-        # Fetch the updated item to return it in the response
-        updated_item = shortener_collection.find_one({"_id": obj_id})
-        if updated_item:
-            updated_item['_id'] = str(updated_item['_id'])
-            return jsonify(updated_item)
-        else:
-            return jsonify({"message": "Failed to retrieve updated item"}), 500
-
-
-@app.route('/shorturl/<string:item_id>', methods=['DELETE'])
-def delete_item(item_id):
-    """
-    Handles DELETE requests to /items/<item_id>.
+    Handles DELETE requests to /shorturl/<string:shorturl_key>>.
     Deletes an item by its MongoDB _id.
     Returns a success message.
     Returns 404 if the item is not found.
     """
-    try:
-        obj_id = ObjectId(item_id)
-    except Exception:
-        return jsonify({"message": "Invalid item ID format"}), 400
-
-    # Delete a single document by its _id
-    delete_result = shortener_collection.delete_one({"_id": obj_id})
+    delete_result = shortener_collection.delete_one({"key": shorturl_key})
 
     if delete_result.deleted_count == 1:
-        return jsonify({"message": f"Item with ID {item_id} deleted successfully"}), 200
+        return jsonify({"message": f"Key: {shorturl_key}  deleted successfully"}), 200
     else:
-        return jsonify({"message": "Item not found"}), 404
+        return jsonify({"message": "URL not found"}), 404
 
 # --- Run the Flask Application ---
 if __name__ == '__main__':
