@@ -2,64 +2,53 @@ from flask import Flask, request, jsonify
 from pymongo import MongoClient
 from bson.objectid import ObjectId # Used to handle MongoDB's unique
 import hashlib
-import time
-import random
+import urllib.parse
+from pymongo.server_api import ServerApi
 
 # Initialize the Flask application
 app = Flask(__name__)
+host_name = "127.0.0.1:5000"
 
 # --- MongoDB Connection ---
 # Replace 'mongodb://localhost:27017/' with your MongoDB connection string
 # If MongoDB is running on your local machine with default port, this should work.
 # For a remote MongoDB Atlas cluster, you would use its connection string.
 try:
-    client = MongoClient('mongodb://localhost:27017/')
-    db = client.mydatabase # Connect to a database named 'mydatabase'
-    shortener_collection = db.shortener # Connect to a collection named 'items'
-    print("Successfully connected to MongoDB!")
+    username = urllib.parse.quote_plus('dpatel0698')
+    password = urllib.parse.quote_plus('SVdn@0698')
+    uri = "mongodb+srv://%s:%s@cluster0.wqobmc3.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0" % (username, password)
+    client = MongoClient(uri, server_api=ServerApi('1'))
+    db = client.Projects # Connect to a database named Projects
+    shortener_collection = db.shortener # Connect to a collection named 'shortener'
+    client.admin.command('ping')
+    print("Pinged your deployment. You successfully connected to MongoDB!")
 except Exception as e:
     print(f"Error connecting to MongoDB: {e}")
 
 
 # --- API Endpoints ---
 
-@app.route('/items', methods=['GET'])
-def get_all_items():
+@app.route('/shorturl/<string:shorturl_key>', methods=['GET'])
+def get_url(shorturl_key):
     """
-    Handles GET requests to /items.
-    Returns a list of all items from the MongoDB collection.
-    """
-    all_items = []
-    # Iterate through all documents in the 'items' collection
-    for item in shortener_collection.find():
-        # MongoDB's default '_id' field is an ObjectId, which is not JSON serializable.
-        # Convert it to a string before returning.
-        item['_id'] = str(item['_id'])
-        all_items.append(item)
-    return jsonify(all_items)
-
-@app.route('/items/<string:item_id>', methods=['GET'])
-def get_item(item_id):
-    """
-    Handles GET requests to /items/<item_id>.
-    Returns a single item by its MongoDB _id.
+    Handles GET requests to /shorturl/<item_id>.
+    Returns a single item by its MongoDB key.
     Returns 404 if the item is not found.
     """
     try:
         # Convert the string ID from the URL to a MongoDB ObjectId
-        obj_id = ObjectId(item_id)
+        key = shorturl_key
     except Exception:
         # If the ID is not a valid ObjectId format, return a bad request error
-        return jsonify({"message": "Invalid item ID format"}), 400
+        return jsonify({"message": "Invalid url format"}), 400
 
     # Find a single document by its _id
-    item = shortener_collection.find_one({"_id": obj_id})
+    item = shortener_collection.find_one({"key": key})
 
     if item:
-        item['_id'] = str(item['_id']) # Convert ObjectId to string for JSON serialization
-        return jsonify(item)
+        return jsonify({"location": item['url']}), 302
     else:
-        return jsonify({"message": "Item not found"}), 404
+        return jsonify({"message": "URL not found"}), 404
 
 
 def generate_unique_url_key(
@@ -134,11 +123,12 @@ def add_item():
 
     # Generate a key for the url using a hash function
     key = generate_unique_url_key(new_data['url'])
-    new_data["short_url"] = "http://localhost/" + key
+    new_data["key"] = key
+    new_data["short_url"] = "http://shorturl/" + key
 
 
     # Insert the new document into the collection. MongoDB will automatically add an '_id'.
-    result = shortener_collection.insert(new_data)
+    result = shortener_collection.insert_one(new_data)
 
     # Fetch the newly created item by its _id to return it in the response
     # This also ensures that the returned item includes the generated _id
@@ -147,11 +137,10 @@ def add_item():
         created_item['_id'] = str(created_item['_id']) # Convert ObjectId to string
         return jsonify(created_item), 201
     else:
-        # This case should ideally not happen if insertion was successful
-        return jsonify({"message": "Failed to retrieve created item"}), 500
+        return jsonify({"wrong_key": new_data['url']}), 500
 
 
-@app.route('/items/<string:item_id>', methods=['PUT'])
+@app.route('/shorturl/<string:item_id>', methods=['PUT'])
 def update_item(item_id):
     """
     Handles PUT requests to /items/<item_id>.
@@ -188,7 +177,7 @@ def update_item(item_id):
             return jsonify({"message": "Failed to retrieve updated item"}), 500
 
 
-@app.route('/items/<string:item_id>', methods=['DELETE'])
+@app.route('/shorturl/<string:item_id>', methods=['DELETE'])
 def delete_item(item_id):
     """
     Handles DELETE requests to /items/<item_id>.
@@ -211,4 +200,4 @@ def delete_item(item_id):
 
 # --- Run the Flask Application ---
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)

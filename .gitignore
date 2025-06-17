@@ -1,0 +1,78 @@
+# Created by https://www.toptal.com/developers/gitignore/api/python,jetbrains
+
+# Python
+# ===============================
+__pycache__/
+*.pyc
+*.pyd
+*.pyo
+.Python
+env/
+venv/
+*.env
+*.venv
+pip-wheel-metadata/
+.tox/
+.nox/
+.eggs/
+*.egg
+*.egg-info/
+dist/
+build/
+*.so
+.pytest_cache/
+.coverage
+.mypy_cache/
+.pyre/
+.ipynb_checkpoints
+.hypothesis/
+htmlcov/
+.nox/
+.spyproject/
+.ruff_cache/
+
+# IDEs and Editors
+# ===============================
+# JetBrains IDEs (e.g., IntelliJ IDEA, PyCharm, WebStorm, PhpStorm, etc.)
+.idea/  # IntelliJ IDEA project files
+*.iml   # Module files (IntelliJ)
+*.ipr   # Project files (IntelliJ - old format)
+*.iws   # Workspace files (IntelliJ - old format)
+.project
+.metadata
+.classpath
+*.sql
+*.sbf
+*.sqlite
+*.dat
+
+# Specific to PyCharm
+# For example, a local virtual environment named 'venv' inside the project
+# already covered by venv/ above, but explicit mention if it's outside default
+# .venv/ or env/ and named differently.
+# You might add specific run configurations if they are sensitive or machine-specific:
+# .idea/runConfigurations/
+# .idea/workspace.xml  # Usually ignored by .idea/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+Thumbs.db
+
+# Windows
+desktop.ini
+
+# Virtualenv files
+# These are often project-specific and can reside anywhere.
+# Add custom virtual environment names here if they are not caught by 'env/' or 'venv/'.
+# e.g., myproject-env/
+# e.g., .myenv/
+
+# Data files (often generated, might want to ignore if they are rebuildable)
+*.log
+*.sqlite3
+db.sqlite3
+local_settings.py # For Django/Flask apps where this contains sensitive local settings
