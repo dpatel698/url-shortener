@@ -1,13 +1,15 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, redirect
+from flask_cors import CORS
 from pymongo import MongoClient
-from bson.objectid import ObjectId # Used to handle MongoDB's unique
 import hashlib
 import urllib.parse
 from pymongo.server_api import ServerApi
 
 # Initialize the Flask application
 app = Flask(__name__)
-host_name = "127.0.0.1:5000"
+CORS(app)
+BASE_SHORT_URL = "http://localhost:5000"
+
 
 # --- MongoDB Connection ---
 # Replace 'mongodb://localhost:27017/' with your MongoDB connection string
@@ -27,26 +29,26 @@ except Exception as e:
 
 
 # --- API Endpoints ---
-
-@app.route('/shorturl/<string:shorturl_key>', methods=['GET'])
-def get_url(shorturl_key):
+@app.route('/<string:shorturl_key>', methods=['GET'])
+def get_original_url_and_redirect(shorturl_key):
     """
-    Handles GET requests to /shorturl/<item_id>.
-    Returns an original url location found by its MongoDB key.
+    Handles GET requests for the short URL.
+    Redirects the user to the original long URL.
     Returns 404 if the key is not found.
     """
+    # Look up the document by the short key
     item = shortener_collection.find_one({"key": shorturl_key})
 
-    if item:
-        return jsonify({"location": item['url']}), 302
+    if item and 'url' in item:
+        # Perform a 302 Found (temporary) redirect to the original URL
+        return redirect(item['url'], code=302)
     else:
-        return jsonify({"message": "URL not found"}), 404
+        return jsonify({"message": "Short URL not found"}), 404
 
 
 def generate_unique_url_key(
     original_url: str,
-    key_length: int = 10,
-    existing_keys_db: dict = None
+    key_length: int = 8,
 ) -> str:
     """
     Generates a unique, short hash key for a given URL,
@@ -56,9 +58,6 @@ def generate_unique_url_key(
         original_url (str): The URL for which to generate a unique key.
         key_length (int): The desired length of the generated key.
                           Shorter keys have a higher practical collision probability.
-        existing_keys_db (dict): A dictionary simulating a database
-                                 mapping existing keys to their original URLs.
-                                 e.g., {"shortkey": "https://long.url"}
 
     Returns:
         str: A unique, short key for the URL.
@@ -81,12 +80,12 @@ def generate_unique_url_key(
         #    This means the URL was already shortened, return the existing key.
         # c) candidate_key IS in existing_keys_db BUT maps to a DIFFERENT url:
         #    This is a true hash collision for our chosen key_length. Retry.
-        query = {candidate_key: {'$exists': True}}
-        find_key = shortener_collection.find_one({"key": candidate_key})
-        if not find_key:
-            # Case a: Key is unique
+        existing_doc = shortener_collection.find_one({"key": candidate_key})
+
+        if not existing_doc:
+            # Case a: Key is unique (no document found with this key)
             return candidate_key
-        elif find_key["key"] == original_url:
+        elif existing_doc.get("url") == original_url:
             # Case b: URL was already shortened with this key
             print(f"DEBUG: Found existing key '{candidate_key}' for '{original_url}'. Returning existing.")
             return candidate_key
@@ -101,41 +100,59 @@ def generate_unique_url_key(
 
 
 @app.route('/shorturl', methods=['POST'])
-def add_item():
+def create_short_url():
     """
     Handles POST requests to /shorturl.
-    Adds a new item to the MongoDB collection.
-    Expects JSON data in the request body with 'url'
-    Returns the newly created item and 201 Created status.
+    Creates a new short URL for a given long URL.
+    Expects JSON data in the request body with 'url'.
+    Returns the newly created short URL details and 201 Created status.
     """
-    new_data = request.get_json()
+    request_data = request.get_json()
 
-    if not new_data or 'url' not in new_data:
+    # Validate input
+    if not request_data or 'url' not in request_data:
         return jsonify({"message": "Missing 'url' in request body"}), 400
 
-    # Generate a key for the url using a hash function
-    key = generate_unique_url_key(new_data['url'])
-    new_data["key"] = key
-    new_data["short_url"] = "http://shorturl/" + key
+    original_url = request_data['url']
 
+    try:
+        # Generate a unique key for the URL
+        key = generate_unique_url_key(original_url)
 
-    # Insert the new document into the collection. MongoDB will automatically add an '_id'.
-    result = shortener_collection.insert_one(new_data)
+        # Construct the full short URL
+        short_url = f"{BASE_SHORT_URL}/{key}"
 
-    # Fetch the newly created item by its _id to return it in the response
-    # This also ensures that the returned item includes the generated _id
-    created_item = shortener_collection.find_one({"_id": result.inserted_id})
-    if created_item:
-        created_item['_id'] = str(created_item['_id']) # Convert ObjectId to string
-        return jsonify(created_item), 201
-    else:
-        return jsonify({"wrong_key": new_data['url']}), 500
+        # Prepare the document to insert into MongoDB
+        new_document = {
+            "url": original_url,
+            "key": key,
+            "short_url": short_url,
+        }
 
-@app.route('/shorturl/<string:shorturl_key>', methods=['DELETE'])
-def delete_item(shorturl_key):
+        # Insert the new document into the collection
+        result = shortener_collection.insert_one(new_document)
+
+        # Fetch the newly created item by its _id to ensure all fields are returned
+        created_item = shortener_collection.find_one({"_id": result.inserted_id})
+        if created_item:
+            # Convert ObjectId to string for JSON serialization
+            created_item['_id'] = str(created_item['_id'])
+            # Remove the MongoDB _id from the response if you don't want it exposed
+            # created_item.pop('_id', None)
+            return jsonify(created_item), 201
+        else:
+            # This case should be rare if insert_one was successful
+            return jsonify({"message": "Failed to retrieve created short URL"}), 500
+
+    except Exception as e:
+        # Catch any exceptions during key generation or DB insertion
+        return jsonify({"message": f"An error occurred: {e}"}), 500
+
+@app.route('/<string:shorturl_key>', methods=['DELETE'])
+def delete_short_url(shorturl_key):
     """
-    Handles DELETE requests to /shorturl/<string:shorturl_key>>.
-    Deletes an item by its MongoDB _id.
+    Handles DELETE requests to /<string:shorturl_key>>.
+    Deletes an item by its MongoDB key.
     Returns a success message.
     Returns 404 if the item is not found.
     """
