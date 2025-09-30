@@ -4,8 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="21c89e3f-462c-4330-91ee-c19da1ebe39b" name="Changes" comment="Frontend and backend are successfully sending and fullfilling requests after fixing endpoints">
-      <change afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+    <list default="true" id="21c89e3f-462c-4330-91ee-c19da1ebe39b" name="Changes" comment="Added detailed readme with full project description">
+      <change afterPath="$PROJECT_DIR$/backend/Procfile" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/requirements.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -104,7 +105,7 @@
       <updated>1750109237849</updated>
       <workItem from="1750109238912" duration="15378000" />
       <workItem from="1750804358320" duration="7854000" />
-      <workItem from="1759250038165" duration="1614000" />
+      <workItem from="1759250038165" duration="2619000" />
     </task>
     <task id="LOCAL-00001" summary="Added api endpoints for urlshortener">
       <option name="closed" value="true" />
@@ -138,7 +139,15 @@
       <option name="project" value="LOCAL" />
       <updated>1750807766996</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Added detailed readme with full project description">
+      <option name="closed" value="true" />
+      <created>1759264265236</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1759264265236</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -160,7 +169,8 @@
     <MESSAGE value="POST and GET endpoints implemented. Can add new urls to the shortener and get original url using the generated key" />
     <MESSAGE value="DELETE endpoint added, can remove url keys from databasey" />
     <MESSAGE value="Frontend and backend are successfully sending and fullfilling requests after fixing endpoints" />
-    <option name="LAST_COMMIT_MESSAGE" value="Frontend and backend are successfully sending and fullfilling requests after fixing endpoints" />
+    <MESSAGE value="Added detailed readme with full project description" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added detailed readme with full project description" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/urlshortener$shortener.coverage" NAME="shortener Coverage Results" MODIFIED="1750807525223" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/backend" />

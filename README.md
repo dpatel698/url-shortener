@@ -66,7 +66,7 @@ npm start
 
 ```bash
 cd backend
-python shortener.py
+python app.py
 ```
 
 Make sure your MongoDB instance is running and accessible.  You may need to configure the connection string in `backend/shortener.py` if your MongoDB instance is not running on the default host and port.
