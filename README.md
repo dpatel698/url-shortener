@@ -1,5 +1,5 @@
 # 🔗 URL Shortener Project 🔗
-### Web Address :  [Click this link](https://myshortener.netlify.app)
+### Web Address :  [Click this link](https://myurlshortener1.netlify.app)
 
 This project is a simple yet effective URL shortener that allows users to convert long URLs into shorter, more manageable links. It consists of a React-based frontend for user interaction and a Flask-based backend with a MongoDB database for storing URL mappings. The system provides a seamless experience for shortening URLs and redirecting users to the original links.
 
